@@ -1,0 +1,7 @@
+# Heaps
+--cmd haxelib --always git hlsdl https://github.com/HaxeFoundation/hashlink.git master libs/sdl
+--cmd haxelib --always git hldx https://github.com/HaxeFoundation/hashlink.git master libs/directx
+--cmd haxelib --always git heaps https://github.com/deepnight/heaps.git
+
+# Deepnight
+--cmd haxelib --always git deepnightLibs https://github.com/deepnight/deepnightLibs.git
