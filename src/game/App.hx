@@ -1,3 +1,6 @@
+import hxd.Key;
+import Types.GameAction;
+import dn.heaps.input.Controller;
 import hxd.res.DefaultFont;
 import ui.Console;
 
@@ -16,6 +19,8 @@ class App extends dn.Process {
 	inline function get_globalMouseY()
 		return scene.mouseY;
 
+	public var controller:Controller<GameAction>;
+
 	public function new(s:h2d.Scene) {
 		super();
 		instance = this;
@@ -26,6 +31,7 @@ class App extends dn.Process {
 		new Console(DefaultFont.get(), scene);
 
 		initEngine();
+		initController();
 
 		startGame();
 	}
@@ -96,6 +102,13 @@ class App extends dn.Process {
 		hxd.Timer.smoothFactor = 0.4;
 		hxd.Timer.wantedFPS = Const.FPS;
 		dn.Process.FIXED_UPDATE_FPS = Const.FIXED_UPDATE_RATE;
+	}
+
+	private function initController() {
+		controller = Controller.createFromAbstractEnum(GameAction);
+
+		controller.removeBindings();
+		controller.bindKeyboard(GameAction.Select, Key.MOUSE_LEFT);
 	}
 
 	private function createGameInstance() {
