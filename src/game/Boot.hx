@@ -13,10 +13,12 @@ class Boot extends hxd.App {
 	override function update(dt:Float) {
 		super.update(dt);
 
+		var adjustedTmod = hxd.Timer.tmod;
+
 		#if hl
 		try {
 		#end
-			dn.Process.updateAll(dt);
+			dn.Process.updateAll(adjustedTmod);
 		#if hl
 		} catch (err) {
 			App.onCrash(err);

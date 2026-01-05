@@ -1,3 +1,4 @@
+import h2d.Scene.ScaleMode;
 import hxd.Key;
 import Types.GameAction;
 import dn.heaps.input.Controller;
@@ -86,6 +87,8 @@ class App extends dn.Process {
 		engine.backgroundColor = 0xff << 24 | 0x111133;
 
 		#if (hl && !debug)
+		final win = hxd.Window.getInstance();
+		win.displayMode = FullscreenResize;
 		engine.fullScreen = true;
 		#end
 
@@ -101,7 +104,7 @@ class App extends dn.Process {
 
 		hxd.Timer.smoothFactor = 0.4;
 		hxd.Timer.wantedFPS = Const.FPS;
-		dn.Process.FIXED_UPDATE_FPS = Const.FIXED_UPDATE_RATE;
+		dn.Process.FIXED_UPDATE_FPS = Const.FIXED_UPDATE_FPS;
 	}
 
 	private function initController() {

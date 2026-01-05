@@ -9,40 +9,44 @@ class Group extends Entity {
 
 	public final yDirection:Int;
 
-	var myStep = false;
+	public var isWhite:Bool = false;
+
+	var myMove = false;
 
 	final mind:GroupMind;
 
-	public function new(cells:Array<Cell>, tile:h2d.Tile, mind:GroupMind, yDirection:Int, onMove:Void->Void) {
+	public function new(cells:Array<Cell>, isWhite:Bool, mind:GroupMind, yDirection:Int, onMoveSelected:Move->Void) {
 		super();
 
 		this.yDirection = yDirection;
-
+		this.isWhite = isWhite;
 		this.mind = mind;
-		this.mind.setGroup(this, onMove);
+		this.mind.setGroup(this, onMoveSelected);
 
 		for (cell in cells) {
-			pieces.push(new Piece(cell, tile, this, new PawnKind()));
+			pieces.push(new Piece(cell, this, new PawnKind()));
 		}
 	}
 
-	public function setMyStep(myStep:Bool) {
-		if (this.myStep == myStep) {
-			return;
-		}
-
-		this.myStep = myStep;
-
-		if (myStep) {
-			mind.onMoveStart();
-		}
+	public function startMove() {
+		this.myMove = true;
+		mind.onMoveStart(this);
 	}
 
-	override function frameUpdate() {
-		super.frameUpdate();
+	public function stopMove() {
+		this.myMove = false;
+		mind.onMoveEnd(this);
+	}
 
-		if (myStep) {
-			mind.update(this);
+	public function moveSequence(piece:Piece) {
+		mind.onMoveSequance(this, piece);
+	}
+
+	public override function preUpdate() {
+		super.preUpdate();
+
+		if (myMove) {
+			mind.preUpdate(this);
 		}
 	}
 }

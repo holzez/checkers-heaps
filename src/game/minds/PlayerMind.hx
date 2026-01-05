@@ -10,7 +10,7 @@ class PlayerMind extends GroupMind {
 
 	var selectedPiece:Null<Piece>;
 
-	var availableCells:Array<Cell> = [];
+	var availableMoves:Array<Move> = [];
 
 	public function new() {
 		super();
@@ -18,61 +18,85 @@ class PlayerMind extends GroupMind {
 		controllerAccess = app.controller.createAccess();
 	}
 
-	override function update(group:Group) {
-		super.update(group);
-
+	public function preUpdate(group:Group) {
 		if (controllerAccess.isPressed(GameAction.Select)) {
-			if (selectedPiece == null) {
-				processPieceSelection(group);
-			} else {
-				processCellSelection(group);
-			}
-		}
-	}
+			final mouseX = app.globalMouseX;
+			final mouseY = app.globalMouseY;
+			final cell = board.getCellAt(mouseX, mouseY);
 
-	private function processPieceSelection(group:Group) {
-		final cell = board.getCellAt(app.globalMouseX, app.globalMouseY);
-		Logger.debug('Piece selection: ${cell}');
-		selectPiece(group, cell);
-	}
-
-	private function processCellSelection(group:Group) {
-		final cell = board.getCellAt(app.globalMouseX, app.globalMouseY);
-		Logger.debug('Cell selection: ${cell}');
-
-		for (availableCell in availableCells) {
-			Logger.debug('Available cell: ${availableCell}');
-			if (cell == availableCell) {
-				Logger.debug('move cell: ${selectedPiece.cell} to ${cell}');
-				selectedPiece.moveTo(cell);
-				deselectPiece(group);
-				moveDone();
+			if (cell == null) {
 				return;
 			}
-		}
 
-		selectPiece(group, cell);
+			final piece = board.getPieceAt(cell);
+
+			if (selectedPiece == null) {
+				if (piece != null && piece.group.uid == group.uid) {
+					selectPiece(piece);
+					piece.startDrag(mouseX, mouseY);
+				}
+			} else if (piece != null && piece.group.uid == group.uid) {
+				selectPiece(piece);
+				piece.startDrag(mouseX, mouseY);
+			} else {
+				var availableMove = getAvailableMove(cell);
+				if (availableMove != null) {
+					selectMove(availableMove);
+				} else {
+					deselectPiece();
+				}
+			}
+		} else if (selectedPiece != null) {
+			if (controllerAccess.isKeyboardDown(hxd.Key.MOUSE_LEFT) && selectedPiece.dragging) {
+				selectedPiece.drag(app.globalMouseX, app.globalMouseY);
+				var cell = board.getCellWithBounds(app.globalMouseX, app.globalMouseY);
+				board.selectCell(cell);
+				return;
+			} else if (selectedPiece.dragging) {
+				var cell = board.getCellWithBounds(app.globalMouseX, app.globalMouseY);
+
+				var availableMove = cell != null ? getAvailableMove(cell) : null;
+				selectedPiece.stopDrag(availableMove?.to);
+
+				if (availableMove != null) {
+					selectMove(availableMove);
+				}
+
+				board.selectCell(null);
+			}
+		}
 	}
 
-	private function selectPiece(group:Group, cell:Cell) {
-		final piece = board.getPieceAt(cell);
+	public function selectPiece(piece:Piece) {
+		selectedPiece = piece;
+		board.setActiveCell(piece.cell);
+		board.selectCell(piece.cell);
 
-		if (piece != null && piece.group.uid == group.uid) {
-			selectedPiece = piece;
-			board.selectCell(cell);
-
-			var _availableCells = piece.kind.getAvailableCells(selectedPiece);
-			availableCells = _availableCells;
-			board.setAvailableCells(_availableCells);
+		if (isAllowedPiece(piece)) {
+			availableMoves = piece.kind.getAvailableMoves(selectedPiece);
 		} else {
-			deselectPiece(group);
+			availableMoves = [];
 		}
+
+		board.setAvailableCells(availableMoves.map(move -> return move.to));
 	}
 
-	private function deselectPiece(group:Group) {
+	public function deselectPiece() {
+		selectedPiece?.stopDrag();
 		selectedPiece = null;
-		availableCells = [];
+		availableMoves = [];
+		board.setActiveCell(null);
 		board.selectCell(null);
 		board.setAvailableCells([]);
+	}
+
+	private function getAvailableMove(cell:Cell):Null<Move> {
+		for (availableMove in availableMoves) {
+			if (availableMove.to == cell) {
+				return availableMove;
+			}
+		}
+
+		return null;
 	}
 }

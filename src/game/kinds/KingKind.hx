@@ -2,14 +2,14 @@ package kinds;
 
 import entities.Piece;
 
-class PawnKind extends PieceKind {
+class KingKind extends PieceKind {
 	public function new() {
 		super();
 	}
 
 	public function getTile(isWhite:Bool):h2d.Tile {
-		final whitePieceTile = hxd.Res.load('sprites/white-piece.png').toTile();
-		final blackPieceTile = hxd.Res.load('sprites/black-piece.png').toTile();
+		final whitePieceTile = hxd.Res.load('sprites/white-king.png').toTile();
+		final blackPieceTile = hxd.Res.load('sprites/black-king.png').toTile();
 		return isWhite ? whitePieceTile : blackPieceTile;
 	}
 
@@ -21,32 +21,35 @@ class PawnKind extends PieceKind {
 
 		for (xDelta in xDeltas) {
 			for (yDelta in yDeltas) {
-				final nextCell = new Cell(piece.cell.x + xDelta, piece.cell.y + yDelta);
+				var nextCell:Cell = piece.cell.clone();
+				var capture:Null<Piece> = null;
+				var stopIteration = false;
 
-				if (!nextCell.isValid()) {
-					continue;
-				}
+				do {
+					nextCell = new Cell(nextCell.x + xDelta, nextCell.y + yDelta);
 
-				final conflictPiece = piece.board.getPieceAt(nextCell);
+					if (!nextCell.isValid()) {
+						break;
+					}
 
-				if (conflictPiece != null && piece.isOpponent(conflictPiece)) {
-					final nextCell2 = new Cell(nextCell.x + xDelta, nextCell.y + yDelta);
+					final conflictPiece = piece.board.getPieceAt(nextCell);
 
-					if (nextCell2.isValid() && piece.board.getPieceAt(nextCell2) == null) {
+					if (conflictPiece == null) {
 						moves.push({
 							piece: piece,
 							from: piece.cell.clone(),
-							to: nextCell2.clone(),
-							capture: conflictPiece,
+							to: nextCell.clone(),
+							capture: capture,
 						});
+					} else {
+						final isOpponent = piece.isOpponent(conflictPiece);
+						if (!isOpponent || capture != null) {
+							stopIteration = true;
+						} else {
+							capture = conflictPiece;
+						}
 					}
-				} else if (conflictPiece == null && yDelta == piece.group.yDirection) {
-					moves.push({
-						piece: piece,
-						from: piece.cell.clone(),
-						to: nextCell.clone(),
-					});
-				}
+				} while (!stopIteration);
 			}
 		}
 
@@ -74,10 +77,6 @@ class PawnKind extends PieceKind {
 	}
 
 	public function canPromote(piece:Piece):Null<PieceKind> {
-		if (piece.cell.y == (piece.group.yDirection == 1 ? 7 : 0)) {
-			return new KingKind();
-		}
-
 		return null;
 	}
 }

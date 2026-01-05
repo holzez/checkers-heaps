@@ -1,3 +1,5 @@
+import entities.Piece;
+
 typedef CellLiteral = {x:Int, y:Int};
 
 abstract Cell(CellLiteral) {

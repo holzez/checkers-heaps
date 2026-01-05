@@ -19,7 +19,7 @@ class Const {
 	static inline function get_FPS()
 		return Std.int(System.getDefaultFrameRate());
 
-	public static final FIXED_UPDATE_RATE = 30;
+	public static final FIXED_UPDATE_FPS = 30;
 
 	//
 	public static var SCALE(get, never):Float;

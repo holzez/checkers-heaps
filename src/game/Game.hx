@@ -1,3 +1,5 @@
+import hxd.Window;
+
 class Game extends utils.AppChildProcess {
 	public static var instance:Game;
 
@@ -5,7 +7,13 @@ class Game extends utils.AppChildProcess {
 
 	public var gameplayLayer:h2d.Layers;
 
+	public var pieceLayer:h2d.Layers;
+
+	public var pieceSelectedLayer:h2d.Layers;
+
 	public var gameFlow:GameFlow;
+
+	private var bgBitmap:h2d.Bitmap;
 
 	public function new() {
 		super();
@@ -14,16 +22,33 @@ class Game extends utils.AppChildProcess {
 		createRootInLayers(App.instance.root, Const.DP_BG);
 
 		gameplayLayer = new h2d.Layers();
+		pieceLayer = new h2d.Layers();
+		pieceSelectedLayer = new h2d.Layers();
+
+		var bgTile = h2d.Tile.fromColor(0x7ebf7b, 1, 1);
+		bgBitmap = new h2d.Bitmap(bgTile);
+		bgBitmap.width = app.scene.width;
+		bgBitmap.height = app.scene.height;
+		app.scene.add(bgBitmap, Const.DP_BG);
+
 		root.add(gameplayLayer, Const.DP_BG);
+		root.add(pieceLayer, Const.DP_MAIN);
+		root.add(pieceSelectedLayer, Const.DP_FRONT);
 
 		createBoard();
+		createGameFlow();
 
-		gameFlow = new GameFlow();
+		final win = Window.getInstance();
+		Logger.debug('scene width: ${app.scene.width}, scene height: ${app.scene.height}');
+		Logger.debug('window width: ${win.width}, window height: ${win.height}');
+	}
 
-		final a = new Cell(0, 0);
-		final b = new Cell(0, 0);
-		final same = a == b;
-		Logger.debug('same: ${same}, a: ${a}, b: ${b}');
+	override function onResize() {
+		super.onResize();
+
+		final win = Window.getInstance();
+		Logger.debug('scene width: ${app.scene.width}, scene height: ${app.scene.height}');
+		Logger.debug('window width: ${win.width}, window height: ${win.height}');
 	}
 
 	public static function exists() {
@@ -33,6 +58,7 @@ class Game extends utils.AppChildProcess {
 	override function onDispose() {
 		super.onDispose();
 
+		board.destroy();
 		gameFlow.destroy();
 
 		for (entity in Entity.all) {
@@ -95,7 +121,7 @@ class Game extends utils.AppChildProcess {
 	}
 
 	public function garbageCollectEntities() {
-		if (Entity.garbage != null || Entity.garbage.allocated == 0) {
+		if (Entity.garbage == null || Entity.garbage.allocated == 0) {
 			return;
 		}
 
@@ -112,5 +138,13 @@ class Game extends utils.AppChildProcess {
 		}
 
 		board = new Board();
+	}
+
+	private function createGameFlow() {
+		if (gameFlow != null) {
+			gameFlow.destroy();
+		}
+
+		gameFlow = new GameFlow();
 	}
 }

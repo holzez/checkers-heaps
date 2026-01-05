@@ -21,18 +21,33 @@ class GameFlow extends utils.GameChildProcess {
 			new Cell(1, 2), new Cell(3, 2), new Cell(5, 2), new Cell(7, 2),
 		];
 
-		final whitePieceTile = hxd.Res.load('sprites/white-piece.png').toTile();
-		final blackPieceTile = hxd.Res.load('sprites/black-piece.png').toTile();
+		groups.push(new Group(whitePieces, true, new PlayerMind(), -1, onGroupMoved.bind()));
+		groups.push(new Group(blackPieces, false, new PlayerMind(), 1, onGroupMoved.bind()));
 
-		groups.push(new Group(whitePieces, whitePieceTile, new PlayerMind(), -1, onGroupMoved.bind()));
-		groups.push(new Group(blackPieces, blackPieceTile, new PlayerMind(), 1, onGroupMoved.bind()));
-
-		groups[activeGroupIndex].setMyStep(true);
+		activeGroupIndex = 0;
+		groups[activeGroupIndex].startMove();
 	}
 
-	private function onGroupMoved() {
-		groups[activeGroupIndex].setMyStep(false);
-		activeGroupIndex = (activeGroupIndex + 1) % groups.length;
-		groups[activeGroupIndex].setMyStep(true);
+	private function onGroupMoved(move:Move) {
+		move.piece.moveTo(move.to);
+		var captured = move.capture != null;
+		move.capture?.destroy();
+
+		final promotedKind = move.piece.kind.canPromote(move.piece);
+		if (promotedKind != null) {
+			move.piece.changeKind(promotedKind);
+		}
+
+		final activeGroup = groups[activeGroupIndex];
+
+		final continueSeq = captured && move.piece.kind.getRequiredMoves(move.piece).length > 0;
+
+		if (continueSeq) {
+			activeGroup.moveSequence(move.piece);
+		} else {
+			activeGroup.stopMove();
+			activeGroupIndex = (activeGroupIndex + 1) % groups.length;
+			groups[activeGroupIndex].startMove();
+		}
 	}
 }
